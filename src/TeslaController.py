@@ -6,6 +6,8 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes, asymmetric, serialization
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
+# json
+import json
 
 
 class TeslaUUIDs:
@@ -16,9 +18,10 @@ class TeslaUUIDs:
 
 
 class TeslaVehicle:
-    def __init__(self, ble_address, name):
+    def __init__(self, ble_address, name, vehicle_eph_public_key=None):
         self.ble_address = ble_address
         self.ble_name = name
+        self.vehicle_eph_public_key = vehicle_eph_public_key
         self.generate_keys()
 
     def __str__(self):
@@ -67,7 +70,7 @@ class TeslaVehicle:
         self.private_key = private_key
         self.public_key = private_key.public_key()
 
-    def encrypt_message(self, message):
+    def signedToMsg(self, message):
         msg = VCSEC_pb2.ToVCSECMessage()
         signed_msg = msg.signedMessage
         signed_msg.protobufMessageAsBytes = message
@@ -79,6 +82,11 @@ class TeslaVehicle:
         )
         signed_msg.signature = signature
         return self.prependLength(msg.SerializeToString())
+    
+    def unsignedToMsg(self, message):
+        msg = VCSEC_pb2.ToVCSECMessage()
+        msg.unsignedMessage.protobufMessageAsBytes = message
+        return self.prependLength(msg.SerializeToString())
 
     def prependLength(self, message):
         # Extends the length of the byte array by two
@@ -88,11 +96,16 @@ class TeslaVehicle:
 
     ###########################       PROCESS RESPONSES       #############################
 
-    def processResponse(self, data):
+    def handle_notify(self, sender, data):
         # parse the FromVCSECMessage stored in data
+        print("Received data from sender #{}".format(sender))
         msg = VCSEC_pb2.FromVCSECMessage()
         msg.ParseFromString(data)
+        # convert msg to json and print
+        json_msg = json.loads(msg.protobufMessageAsBytes)
+        print(json_msg)
         # TODO: check if the message is signed
+        # TODO: get command status
         # TODO: do something with the message
         return 0
 
@@ -115,7 +128,7 @@ class TeslaVehicle:
         permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_REMOTE_DRIVE)
         permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_REMOTE_UNLOCK)
         # permissions_action.metadataForKey.keyFormFactor = VCSEC_pb2.KEY_FORM_FACTOR_ANDROID_DEVICE
-        return msg.SerializeToString()
+        return self.unsignedToMsg(msg.SerializeToString())
 
     def unlockMsg(self):
         # unlocks the vehicle
@@ -132,12 +145,13 @@ class TeslaVehicle:
         # executes the given RKE action
         msg = VCSEC_pb2.UnsignedMessage()
         msg.RKEAction = action
-        return msg.SerializeToString()
+        return self.signedToMsg(msg.SerializeToString())
 
     def vehiclePublicKeyMsg(self):
+        # requests the public key of the vehicle
         msg = VCSEC_pb2.UnsignedMessage()
         info_request = msg.InformationRequest
         info_request.informationRequestType = VCSEC_pb2.INFORMATION_REQUEST_TYPE_GET_EPHEMERAL_PUBLIC_KEY
         key_id = info_request.keyId
         key_id.publicKeySHA1 = self.getPublicKey()
-        return msg.SerializeToString()
+        return self.unsignedToMsg(msg.SerializeToString())
