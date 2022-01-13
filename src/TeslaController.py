@@ -7,11 +7,13 @@ from cryptography.hazmat.primitives import hashes, asymmetric, serialization
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
 
+
 class TeslaUUIDs:
     SERVICE_UUID = "00000211-b2d1-43f0-9b88-960cebf8b91e"       # Tesla Vehicle Service
     CHAR_WRITE_UUID = "00000212-b2d1-43f0-9b88-960cebf8b91e"    # To Vehicle
     CHAR_READ_UUID = "00000213-b2d1-43f0-9b88-960cebf8b91e"     # From Vehicle
     CHAR_VERSION_UUID = "00000214-b2d1-43f0-9b88-960cebf8b91e"  # Version Info
+
 
 class TeslaVehicle:
     def __init__(self, ble_address, name):
@@ -51,7 +53,8 @@ class TeslaVehicle:
                 print("Loaded private key from file")
         except FileNotFoundError:
             # generate a new key
-            private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+            private_key = ec.generate_private_key(
+                ec.SECP256R1(), default_backend())
             # save the key
             pem = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
@@ -82,11 +85,16 @@ class TeslaVehicle:
         # Shifts all bytes to the right by two
         # Sets the first two bytes to the length of the message
         return bytearray([len(message) >> 8, len(message) & 0xFF]) + message
-    
 
     ###########################       PROCESS RESPONSES       #############################
+
     def processResponse(self, data):
         # parse the FromVCSECMessage stored in data
+        msg = VCSEC_pb2.FromVCSECMessage()
+        msg.ParseFromString(data)
+        # TODO: check if the message is signed
+        # TODO: do something with the message
+        return 0
 
     ###########################       VEHICLE ACTIONS       #############################
 
@@ -111,21 +119,25 @@ class TeslaVehicle:
 
     def unlockMsg(self):
         # unlocks the vehicle
-        return rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_UNLOCK)
-    
+        return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_UNLOCK)
+
     def lockMsg(self):
-        return rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_LOCK)
-    
+        return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_LOCK)
+
     def openTrunkMsg(self):
         # opens the rear trunk
-        return rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_OPEN_TRUNK)
-
-
-    def vehiclePublicKeyMsg(self):
-        # gets the vehicle's public (ephemeral) key
+        return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_OPEN_TRUNK)
 
     def rkeActionMsg(self, action):
         # executes the given RKE action
-        # UnsignedMessage {
-        #     RKEAction_E: <any rke action>
-        # }
+        msg = VCSEC_pb2.UnsignedMessage()
+        msg.RKEAction = action
+        return msg.SerializeToString()
+
+    def vehiclePublicKeyMsg(self):
+        msg = VCSEC_pb2.UnsignedMessage()
+        info_request = msg.InformationRequest
+        info_request.informationRequestType = VCSEC_pb2.INFORMATION_REQUEST_TYPE_GET_EPHEMERAL_PUBLIC_KEY
+        key_id = info_request.keyId
+        key_id.publicKeySHA1 = self.getPublicKey()
+        return msg.SerializeToString()
