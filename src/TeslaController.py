@@ -111,9 +111,21 @@ class TeslaVehicle:
 
     def unlockMsg(self):
         # unlocks the vehicle
+        return rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_UNLOCK)
     
     def lockMsg(self):
-        # locks the vehicle
+        return rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_LOCK)
     
     def openTrunkMsg(self):
         # opens the rear trunk
+        return rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_OPEN_TRUNK)
+
+
+    def vehiclePublicKeyMsg(self):
+        # gets the vehicle's public (ephemeral) key
+
+    def rkeActionMsg(self, action):
+        # executes the given RKE action
+        # UnsignedMessage {
+        #     RKEAction_E: <any rke action>
+        # }
