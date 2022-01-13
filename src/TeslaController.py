@@ -22,21 +22,6 @@ class TeslaVehicle:
     def __str__(self):
         return "BLE Address: {}, Name: {}".format(self.ble_address, self.ble_name)
 
-    def initMsg(self):
-        # the first message sent to the vehicle
-        # contains the public key and permissions requested
-        msg = VCSEC_pb2.UnsignedMessage()
-        whitelist_operation = msg.WhitelistOperation
-        permissions_action = whitelist_operation.addKeyToWhitelistAndAddPermissions
-        permissions_action.key.PublicKeyRaw = self.getPublicKey()
-        permissions = permissions_action.permission
-        permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_LOCAL_DRIVE)
-        permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_LOCAL_UNLOCK)
-        permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_REMOTE_DRIVE)
-        permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_REMOTE_UNLOCK)
-        # permissions_action.metadataForKey.keyFormFactor = VCSEC_pb2.KEY_FORM_FACTOR_ANDROID_DEVICE
-        return msg.SerializeToString()
-
     def getPrivateKey(self):
         private_key_bytes = self.private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -97,3 +82,38 @@ class TeslaVehicle:
         # Shifts all bytes to the right by two
         # Sets the first two bytes to the length of the message
         return bytearray([len(message) >> 8, len(message) & 0xFF]) + message
+    
+
+    ###########################       PROCESS RESPONSES       #############################
+    def processResponse(self, data):
+        # parse the FromVCSECMessage stored in data
+
+    ###########################       VEHICLE ACTIONS       #############################
+
+    # These functions generate a message to perform a particular action, such
+    # as unlocking the vehicle. The response is in the form of a byte array.
+    # Note: It still needs to be encrypted and prepended.
+
+    def initMsg(self):
+        # the first message sent to the vehicle
+        # contains the public key and permissions requested
+        msg = VCSEC_pb2.UnsignedMessage()
+        whitelist_operation = msg.WhitelistOperation
+        permissions_action = whitelist_operation.addKeyToWhitelistAndAddPermissions
+        permissions_action.key.PublicKeyRaw = self.getPublicKey()
+        permissions = permissions_action.permission
+        permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_LOCAL_DRIVE)
+        permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_LOCAL_UNLOCK)
+        permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_REMOTE_DRIVE)
+        permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_REMOTE_UNLOCK)
+        # permissions_action.metadataForKey.keyFormFactor = VCSEC_pb2.KEY_FORM_FACTOR_ANDROID_DEVICE
+        return msg.SerializeToString()
+
+    def unlockMsg(self):
+        # unlocks the vehicle
+    
+    def lockMsg(self):
+        # locks the vehicle
+    
+    def openTrunkMsg(self):
+        # opens the rear trunk
