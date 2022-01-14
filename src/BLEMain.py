@@ -24,11 +24,11 @@ async def scan():
             tesla_vehicles.append(d)
 
 
-async def run(device, public_key=None):
-    print("Connecting to {}...".format(device))
-    async with BleakClient(device) as client:
+async def run(address, name, public_key=None):
+    print("Connecting to {}...".format(address))
+    async with BleakClient(address) as client:
         print("Connected")
-        vehicle = TeslaVehicle(device.address, device.name, public_key)
+        vehicle = TeslaVehicle(address, name, public_key)
         # UUIDS: SERVICE_UUID, CHAR_WRITE_UUID, CHAR_READ_UUID, CHAR_VERSION_UUID
         msg = vehicle.initMsg()
         await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, msg)
@@ -53,16 +53,21 @@ def main():
             selection = selection.strip()
             selection = selection.replace("\n", "")
             if selection != "" and selection.isdigit():
-                for line in file:
-                    if line.startswith(selection + "\t"):
+                # go through each line in the file
+                file2 = open(".tesladata", "r")
+                for line2 in file2:
+                    if line2.startswith(selection + "\t"):
                         # ID   BT_NAME  BT_ADDR   NICKNAME PUBLIC_KEY
-                        address = line.split("\t")[2]
-                        public_key = line.split("\t")[4]
+                        address = line2.split("\t")[2]
+                        public_key = line2.split("\t")[4]
+                        bt_name = line2.split("\t")[1]
                         if public_key == "null":
                             public_key = None
                         loop = asyncio.get_event_loop()
-                        loop.run_until_complete(run(address, public_key))
+                        loop.run_until_complete(run(address, bt_name, public_key))
+                        file2.close()
                         break
+                file2.close()
                 print("Invalid selection. Try again:")
                 selection = input()
             elif selection == "":
@@ -82,13 +87,15 @@ def main():
             bt_addr = tesla_vehicles[choice].address
             name = tesla_vehicles[choice].name
             nickname = input("Enter a nickname for this vehicle: ")
+            # id is # lines in file
+            id = str(len(open(".tesladata").readlines()))
             # save the vehicle to .tesladata file
             file = open(".tesladata", "a")
             file.write("{}\t{}\t{}\t{}\t{}\n".format(
-                len(file.readlines()), name, bt_addr, nickname, "null"))
+                id, name, bt_addr, nickname, "null"))
             file.close()
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(run(tesla_vehicles[choice]))
+            loop.run_until_complete(run(bt_addr, name))
 
 
 # Run the program

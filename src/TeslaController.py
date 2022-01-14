@@ -85,7 +85,9 @@ class TeslaVehicle:
     
     def unsignedToMsg(self, message):
         msg = VCSEC_pb2.ToVCSECMessage()
-        msg.unsignedMessage.protobufMessageAsBytes = message
+        unsigned_msg = msg.signedMessage
+        unsigned_msg.protobufMessageAsBytes = message
+        unsigned_msg.signatureType = VCSEC_pb2.SIGNATURE_TYPE_PRESENT_KEY
         return self.prependLength(msg.SerializeToString())
 
     def prependLength(self, message):
