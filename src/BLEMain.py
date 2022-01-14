@@ -30,10 +30,12 @@ async def run(address, name, nickname, public_key=None):
         print("Connected")
         vehicle = TeslaVehicle(address, name, public_key)
         # UUIDS: SERVICE_UUID, CHAR_WRITE_UUID, CHAR_READ_UUID, CHAR_VERSION_UUID
-        msg = vehicle.initMsg()
-        await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, msg)
-        print("Sent message to vehicle...")
-        await client.start_notify(TeslaUUIDs.CHAR_READ_UUID, callback=vehicle.handle_notify)
+        if not vehicle.isInitialized():
+            # initialize vehicle: get public key, etc.
+            msg = vehicle.initMsg()
+            await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, msg)
+            print("Sent message to vehicle...")
+            await client.start_notify(TeslaUUIDs.CHAR_READ_UUID, callback=vehicle.handle_notify)
         # TODO: Do stuff
 
         print("Done")
