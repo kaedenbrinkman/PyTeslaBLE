@@ -24,8 +24,8 @@ async def scan():
             tesla_vehicles.append(d)
 
 
-async def run(address, name, public_key=None):
-    print("Connecting to {}...".format(address))
+async def run(address, name, nickname, public_key=None):
+    print("Connecting to {} ({})...".format(name, address))
     async with BleakClient(address) as client:
         print("Connected")
         vehicle = TeslaVehicle(address, name, public_key)
@@ -42,12 +42,21 @@ async def run(address, name, public_key=None):
 def main():
     file = open(".tesladata", "r")
     vehicles_found = False
+    id = 0
     for line in file:
-        print(line)
+        address = line.split("\t")[2]
+        bt_name = line.split("\t")[1]
+        nickname = line.split("\t")[3]
+        if not vehicles_found:
+            print("SAVED VEHICLES:")
+            print("{}\t{}\t{}\t\t\t{}".format(
+                "ID", "Nickname", "BT Name", "BT Address"))
+        print("{}\t{}\t\t{}\t{}".format(id, nickname, bt_name, address))
+        id += 1
         vehicles_found = True
     if vehicles_found:
         print(
-            "Select a vehicle from the list above, or press enter to scan for new vehicles.")
+            "Select a vehicle by ID from the list above, or press enter to scan for new vehicles.")
         selection = input()
         while (True):
             selection = selection.strip()
@@ -61,10 +70,12 @@ def main():
                         address = line2.split("\t")[2]
                         public_key = line2.split("\t")[4]
                         bt_name = line2.split("\t")[1]
+                        nickname = line2.split("\t")[3]
                         if public_key == "null":
                             public_key = None
                         loop = asyncio.get_event_loop()
-                        loop.run_until_complete(run(address, bt_name, public_key))
+                        loop.run_until_complete(
+                            run(address, bt_name, nickname, public_key))
                         file2.close()
                         break
                 file2.close()
@@ -95,7 +106,7 @@ def main():
                 id, name, bt_addr, nickname, "null"))
             file.close()
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(run(bt_addr, name))
+            loop.run_until_complete(run(bt_addr, name, nickname))
 
 
 # Run the program
