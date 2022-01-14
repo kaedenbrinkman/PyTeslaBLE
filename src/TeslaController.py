@@ -99,13 +99,17 @@ class TeslaVehicle:
         return bytearray([len(message) >> 8, len(message) & 0xFF]) + message
 
     ###########################       PROCESS RESPONSES       #############################
-
+    # FromVCSECMessage {
+    #     commandStatus {
+    #         operationStatus: OPERATIONSTATUS_WAIT
+    #     }
+    # }
     def handle_notify(self, sender, data):
         # remove first two bytes (length)
         data = data[2:]
         msg = VCSEC_pb2.FromVCSECMessage()
         msg.ParseFromString(data)
-        print(msg)        
+        print(msg)
         # TODO: check if the message is signed
         # TODO: get command status
         # TODO: do something with the message
@@ -117,9 +121,8 @@ class TeslaVehicle:
     # as unlocking the vehicle. The response is in the form of a byte array.
     # Note: It still needs to be encrypted and prepended.
 
-    def initMsg(self):
-        # the first message sent to the vehicle
-        # contains the public key and permissions requested
+    def whitelistOp(self):
+        # request to add a vehicle to the whitelist, request permissions
         msg = VCSEC_pb2.UnsignedMessage()
         whitelist_operation = msg.WhitelistOperation
         permissions_action = whitelist_operation.addKeyToWhitelistAndAddPermissions

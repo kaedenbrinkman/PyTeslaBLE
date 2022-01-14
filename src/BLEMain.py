@@ -39,10 +39,15 @@ async def run(address, name, nickname, paired=False, public_key=None):
                 # register notifications for responses from vehicle
                 await client.start_notify(TeslaUUIDs.CHAR_READ_UUID, callback=vehicle.handle_notify)
 
-                # initialize vehicle: get public key, etc.
-                msg = vehicle.initMsg()
+                # whitelist operation
+                msg = vehicle.whitelistOp()
                 await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, msg, response=True)
-                print("Sent init message to vehicle...")
+                print("Sent whitelist request to vehicle...")
+
+                # get public key
+                msg = vehicle.vehiclePublicKeyMsg()
+                await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, msg, response=True)
+                print("Sent public key request to vehicle...")
 
                 await asyncio.sleep(5.0)
             
@@ -53,6 +58,7 @@ async def run(address, name, nickname, paired=False, public_key=None):
             await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, unlock_msg, response=True)
             print("Sent unlock message to vehicle...")
             await asyncio.sleep(5.0)
+            await client.disconnect()
     except Exception as e:
         print("Error connecting: {}".format(e))
         try_again = input("Start over? (y/n): ")
