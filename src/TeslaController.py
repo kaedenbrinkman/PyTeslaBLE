@@ -56,7 +56,6 @@ class TeslaVehicle:
                     password=None,
                     backend=default_backend()
                 )
-                print("Loaded private key from file")
         except FileNotFoundError:
             # generate a new key
             private_key = ec.generate_private_key(
@@ -103,13 +102,12 @@ class TeslaVehicle:
 
     def handle_notify(self, sender, data):
         # parse the FromVCSECMessage stored in data
-        print("Received data from sender #{}".format(sender))
         print("Data: {}".format(data))
-        msg = VCSEC_pb2.FromVCSECMessage()
-        msg.ParseFromString(data)
+        #msg = VCSEC_pb2.FromVCSECMessage()
+        #msg.ParseFromString(data)
         # convert msg to json and print
-        json_msg = json.loads(msg.protobufMessageAsBytes)
-        print(json_msg)
+        #json_msg = json.loads(msg.protobufMessageAsBytes)
+        #print(json_msg)
         # TODO: check if the message is signed
         # TODO: get command status
         # TODO: do something with the message
