@@ -31,24 +31,36 @@ async def run(address, name, nickname, paired=False, public_key=None):
         # pair the vehicle before connecting
         print("Pairing vehicle...")
         print("Pairing not supported. Use the UWP Sample app for pairing.")
-    async with BleakClient(address) as client:
-        print("Connected")
-        # UUIDS: SERVICE_UUID, CHAR_WRITE_UUID, CHAR_READ_UUID, CHAR_VERSION_UUID
-        if True or not vehicle.isInitialized():
-            version = await client.read_gatt_char(TeslaUUIDs.CHAR_VERSION_UUID)
-            print(version)
-            # initialize vehicle: get public key, etc.
-            msg = vehicle.initMsg()
-            await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, msg, response=True)
-            print("Sent message to vehicle...")
-            await client.start_notify(TeslaUUIDs.CHAR_READ_UUID, callback=vehicle.handle_notify)
-            status = await client.read_gatt_char(TeslaUUIDs.CHAR_READ_UUID)
-            print(status)
-            
-        # TODO: Do stuff
+    try:
+        async with BleakClient(address) as client:
+            print("Connected")
+            # UUIDS: SERVICE_UUID, CHAR_WRITE_UUID, CHAR_READ_UUID, CHAR_VERSION_UUID
+            if not vehicle.isInitialized():
+                # register notifications for responses from vehicle
+                await client.start_notify(TeslaUUIDs.CHAR_READ_UUID, callback=vehicle.handle_notify)
 
-        print("Done")
-        exit()
+                # initialize vehicle: get public key, etc.
+                msg = vehicle.initMsg()
+                await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, msg, response=True)
+                print("Sent init message to vehicle...")
+
+                await asyncio.sleep(5.0)
+            
+            # now we are ready to send commands to the vehicle
+            # TODO: Do stuff
+
+            unlock_msg = vehicle.unlockMsg()
+            await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, unlock_msg, response=True)
+            print("Sent unlock message to vehicle...")
+            await asyncio.sleep(5.0)
+    except Exception as e:
+        print("Error connecting: {}".format(e))
+        try_again = input("Start over? (y/n): ")
+        if try_again == "y":
+            await main()
+
+    print("Done")
+    exit()
 
 
 def main():

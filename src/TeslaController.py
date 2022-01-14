@@ -28,7 +28,7 @@ class TeslaVehicle:
         return "BLE Address: {}, Name: {}".format(self.ble_address, self.ble_name)
     
     def isInitialized(self):
-        return self.vehicle_eph_public_key is not None
+        return len(self.vehicle_eph_public_key) > 10
 
     def getPrivateKey(self):
         private_key_bytes = self.private_key.private_bytes(
