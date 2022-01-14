@@ -23,6 +23,7 @@ class TeslaVehicle:
         self.ble_name = name
         self.vehicle_eph_public_key = vehicle_eph_public_key
         self.generate_keys()
+        self.counter = 0
 
     def __str__(self):
         return "BLE Address: {}, Name: {}".format(self.ble_address, self.ble_name)
@@ -73,16 +74,30 @@ class TeslaVehicle:
         self.public_key = private_key.public_key()
 
     def signedToMsg(self, message):
+        shared_secret = self.getPublicKey()
+        encryptor = AESGCM(shared_secret)
+        nonce = bytearray()
+        nonce.append((self.counter >> 24) & 255)
+        nonce.append((self.counter >> 16) & 255)
+        nonce.append((self.counter >> 8) & 255)
+        nonce.append(self.counter & 255)
+
+        encrypted_msg = encryptor.encrypt(
+            nonce,
+            message,
+            None
+        )
+
+        # keyID is SHA1 of the public key
+        key_id = hashes.Hash(hashes.SHA1(), backend=default_backend())
+
         msg = VCSEC_pb2.ToVCSECMessage()
         signed_msg = msg.signedMessage
-        signed_msg.protobufMessageAsBytes = message
+        signed_msg.protobufMessageAsBytes = encrypted_msg[:-16]
         signed_msg.signatureType = VCSEC_pb2.SIGNATURE_TYPE_PRESENT_KEY
-        # sign the message
-        signature = self.private_key.sign(
-            signed_msg.protobufMessageAsBytes,
-            ec.ECDSA(hashes.SHA256())
-        )
-        signed_msg.signature = signature
+        signed_msg.counter = self.counter
+        signed_msg.signature = encrypted_msg[-16:]
+        signed_msg.keyId = key_id.update(shared_secret).finalize()
         return self.prependLength(msg.SerializeToString())
     
     def unsignedToMsg(self, message):
@@ -159,4 +174,4 @@ class TeslaVehicle:
         info_request.informationRequestType = VCSEC_pb2.INFORMATION_REQUEST_TYPE_GET_EPHEMERAL_PUBLIC_KEY
         key_id = info_request.keyId
         key_id.publicKeySHA1 = self.getPublicKey()
-        return self.unsignedToMsg(msg.SerializeToString())
+        return self.signedToMsg(msg.SerializeToString())
