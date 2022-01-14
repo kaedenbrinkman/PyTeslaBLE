@@ -104,6 +104,7 @@ class TeslaVehicle:
     def handle_notify(self, sender, data):
         # parse the FromVCSECMessage stored in data
         print("Received data from sender #{}".format(sender))
+        print("Data: {}".format(data))
         msg = VCSEC_pb2.FromVCSECMessage()
         msg.ParseFromString(data)
         # convert msg to json and print

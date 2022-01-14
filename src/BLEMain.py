@@ -34,15 +34,21 @@ async def run(address, name, nickname, paired=False, public_key=None):
     async with BleakClient(address) as client:
         print("Connected")
         # UUIDS: SERVICE_UUID, CHAR_WRITE_UUID, CHAR_READ_UUID, CHAR_VERSION_UUID
-        if not vehicle.isInitialized():
+        if True or not vehicle.isInitialized():
+            version = await client.read_gatt_char(TeslaUUIDs.CHAR_VERSION_UUID)
+            print(version)
             # initialize vehicle: get public key, etc.
             msg = vehicle.initMsg()
-            await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, msg)
+            await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, msg, response=True)
             print("Sent message to vehicle...")
             await client.start_notify(TeslaUUIDs.CHAR_READ_UUID, callback=vehicle.handle_notify)
+            status = await client.read_gatt_char(TeslaUUIDs.CHAR_READ_UUID)
+            print(status)
+            
         # TODO: Do stuff
 
         print("Done")
+        exit()
 
 
 def main():
@@ -81,7 +87,7 @@ def main():
                             public_key = None
                         loop = asyncio.get_event_loop()
                         loop.run_until_complete(
-                            run(address, bt_name, nickname, False, public_key))
+                            run(address, bt_name, nickname, True, public_key))
                         file2.close()
                         break
                 file2.close()
