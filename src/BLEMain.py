@@ -24,11 +24,15 @@ async def scan():
             tesla_vehicles.append(d)
 
 
-async def run(address, name, nickname, public_key=None):
+async def run(address, name, nickname, paired=False, public_key=None):
     print("Connecting to {} ({})...".format(name, address))
+    vehicle = TeslaVehicle(address, name, public_key)
+    if not paired:
+        # pair the vehicle before connecting
+        print("Pairing vehicle...")
+        print("Pairing not supported. Use the UWP Sample app for pairing.")
     async with BleakClient(address) as client:
         print("Connected")
-        vehicle = TeslaVehicle(address, name, public_key)
         # UUIDS: SERVICE_UUID, CHAR_WRITE_UUID, CHAR_READ_UUID, CHAR_VERSION_UUID
         if not vehicle.isInitialized():
             # initialize vehicle: get public key, etc.
@@ -77,7 +81,7 @@ def main():
                             public_key = None
                         loop = asyncio.get_event_loop()
                         loop.run_until_complete(
-                            run(address, bt_name, nickname, public_key))
+                            run(address, bt_name, nickname, False, public_key))
                         file2.close()
                         break
                 file2.close()
@@ -99,6 +103,7 @@ def main():
                 input("Enter the number of the vehicle to connect to: "))
             bt_addr = tesla_vehicles[choice].address
             name = tesla_vehicles[choice].name
+            paired = False # TODO: see if we can actually see whether the vehicle is paired
             nickname = input("Enter a nickname for this vehicle: ")
             # id is # lines in file
             id = str(len(open(".tesladata").readlines()))
@@ -108,7 +113,7 @@ def main():
                 id, name, bt_addr, nickname, "null"))
             file.close()
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(run(bt_addr, name, nickname))
+            loop.run_until_complete(run(bt_addr, name, paired, nickname))
 
 
 # Run the program
