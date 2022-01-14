@@ -101,13 +101,11 @@ class TeslaVehicle:
     ###########################       PROCESS RESPONSES       #############################
 
     def handle_notify(self, sender, data):
-        # parse the FromVCSECMessage stored in data
-        print("Data: {}".format(data))
-        #msg = VCSEC_pb2.FromVCSECMessage()
-        #msg.ParseFromString(data)
-        # convert msg to json and print
-        #json_msg = json.loads(msg.protobufMessageAsBytes)
-        #print(json_msg)
+        # remove first two bytes (length)
+        data = data[2:]
+        msg = VCSEC_pb2.FromVCSECMessage()
+        msg.ParseFromString(data)
+        print(msg)        
         # TODO: check if the message is signed
         # TODO: get command status
         # TODO: do something with the message

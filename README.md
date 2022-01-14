@@ -30,18 +30,53 @@ Select a vehicle by ID from the list above, or press enter to scan for new vehic
 0
 Connecting to Sc6b7ccc84c5b6418B (00:00:5E:00:53:AF)...
 Connected
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
-Data: bytearray(b'\x00\x06"\x04\x08\x01\x12\x00')
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
+commandStatus {
+  operationStatus: OPERATIONSTATUS_WAIT
+  signedMessageStatus {
+  }
+}
+
 Sent init message to vehicle...
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
 Sent unlock message to vehicle...
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
-Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
+authenticationRequest {
+  requestedLevel: AUTHENTICATION_LEVEL_DRIVE
+}
+
 Done
 ```
