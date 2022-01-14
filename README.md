@@ -17,3 +17,31 @@ The solution to this problem is to pre-pair the vehicle using another app. I hav
 
 ## Credits
 Huge props to Lex Nastin for putting together some documentation for the Tesla BLE API. Check out the documentation [here](https://teslabtapi.lexnastin.com/).
+
+
+## Example
+Below is an example of how the program works so far:
+```
+BLEMain.py
+SAVED VEHICLES:
+ID      Nickname        BT Name                 BT Address
+0       My_Car          Sc6b7ccc84c5b6418B      00:00:5E:00:53:AF
+Select a vehicle by ID from the list above, or press enter to scan for new vehicles.
+0
+Connecting to Sc6b7ccc84c5b6418B (00:00:5E:00:53:AF)...
+Connected
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Data: bytearray(b'\x00\x06"\x04\x08\x01\x12\x00')
+Sent init message to vehicle...
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Sent unlock message to vehicle...
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Data: bytearray(b'\x00\x04\x1a\x02\x18\x02')
+Done
+```
