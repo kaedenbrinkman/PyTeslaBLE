@@ -17,18 +17,24 @@ class TeslaUUIDs:
 
 
 class TeslaVehicle:
-    def __init__(self, ble_address, name, vehicle_eph_public_key=None):
+    def __init__(self, ble_address, name, counter=0, vehicle_eph_public_key=None):
         self.ble_address = ble_address
         self.ble_name = name
-        self.vehicle_eph_public_key = vehicle_eph_public_key
+
+        if vehicle_eph_public_key != None:
+            curve = ec.SECP256R1()
+            self.vehicle_eph_public_key = ec.EllipticCurvePublicKey.from_encoded_point(curve, vehicle_eph_public_key)
+        else:
+            self.vehicle_eph_public_key = None
+
         self.generate_keys()
-        self.counter = 0
+        self.counter = counter
 
     def __str__(self):
         return "BLE Address: {}, Name: {}".format(self.ble_address, self.ble_name)
     
     def isInitialized(self):
-        return len(self.vehicle_eph_public_key) > 10
+        return self.vehicle_eph_public_key != None
 
     def getPrivateKey(self):
         private_key_bytes = self.private_key.private_bytes(
@@ -40,10 +46,27 @@ class TeslaVehicle:
 
     def getPublicKey(self):
         public_key_bytes = self.public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
+            encoding=serialization.Encoding.X962,
+            format=serialization.PublicFormat.UncompressedPoint
         )
         return public_key_bytes
+
+    def getKeyId(self):
+        public_key = self.getPublicKey()
+
+        digest = hashes.Hash(hashes.SHA1())
+        digest.update(public_key)
+        return digest.finalize()[:4]
+
+    def getSharedKey(self):
+        # creates sha1 hasher for creating shared key
+        hasher = hashes.Hash(hashes.SHA1())
+        # exchange own private key with car's ephemeral key to create an intermediate shared key
+        shared_key = self.private_key.exchange(ec.ECDH(), self.vehicle_eph_public_key)
+        # intermediate shared key is then inserted into the hasher
+        hasher.update(shared_key)
+        # and the first 16 bytes of the hash will be our final shared key
+        return hasher.finalize()[:16]
 
     def generate_keys(self):
         # checks for a file named private_key.pem
@@ -73,7 +96,9 @@ class TeslaVehicle:
         self.public_key = private_key.public_key()
 
     def signedToMsg(self, message):
-        shared_secret = self.getPublicKey()
+        if not self.isInitialized():
+            raise Exception('Car\'s ephermeral key not yet loaded!')
+        shared_secret = self.getSharedKey()
         encryptor = AESGCM(shared_secret)
         nonce = bytearray()
         nonce.append((self.counter >> 24) & 255)
@@ -81,29 +106,30 @@ class TeslaVehicle:
         nonce.append((self.counter >> 8) & 255)
         nonce.append(self.counter & 255)
 
+        umsg_to = VCSEC_pb2.ToVCSECMessage()
+        umsg_to.unsignedMessage.CopyFrom(message)
+
         encrypted_msg = encryptor.encrypt(
             nonce,
-            message,
+            umsg_to.SerializeToString(),
             None
         )
-
-        # keyID is SHA1 of the public key
-        key_id = hashes.Hash(hashes.SHA1(), backend=default_backend())
 
         msg = VCSEC_pb2.ToVCSECMessage()
         signed_msg = msg.signedMessage
         signed_msg.protobufMessageAsBytes = encrypted_msg[:-16]
-        signed_msg.signatureType = VCSEC_pb2.SIGNATURE_TYPE_PRESENT_KEY
+        signed_msg.signatureType = VCSEC_pb2.SIGNATURE_TYPE_AES_GCM
         signed_msg.counter = self.counter
         signed_msg.signature = encrypted_msg[-16:]
-        signed_msg.keyId = key_id.update(shared_secret).finalize()
+        signed_msg.keyId = self.getKeyId()
+
+        self.counter += 1
         return self.prependLength(msg.SerializeToString())
     
     def unsignedToMsg(self, message):
         msg = VCSEC_pb2.ToVCSECMessage()
-        unsigned_msg = msg.signedMessage
-        unsigned_msg.protobufMessageAsBytes = message
-        unsigned_msg.signatureType = VCSEC_pb2.SIGNATURE_TYPE_PRESENT_KEY
+        unsigned_msg = msg.unsignedMessage
+        unsigned_msg.CopyFrom(message)
         return self.prependLength(msg.SerializeToString())
 
     def prependLength(self, message):
@@ -111,6 +137,14 @@ class TeslaVehicle:
         # Shifts all bytes to the right by two
         # Sets the first two bytes to the length of the message
         return bytearray([len(message) >> 8, len(message) & 0xFF]) + message
+    
+    def loadEphemeralKey(self, key):
+        curve = ec.SECP256R1()
+        self.vehicle_eph_public_key = ec.EllipticCurvePublicKey.from_encoded_point(curve, key)
+
+    def setCounter(self, counter):
+        self.counter = counter
+
 
     ###########################       PROCESS RESPONSES       #############################
     # FromVCSECMessage {
@@ -146,8 +180,12 @@ class TeslaVehicle:
         permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_LOCAL_UNLOCK)
         permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_REMOTE_DRIVE)
         permissions.append(VCSEC_pb2.WHITELISTKEYPERMISSION_REMOTE_UNLOCK)
-        # permissions_action.metadataForKey.keyFormFactor = VCSEC_pb2.KEY_FORM_FACTOR_ANDROID_DEVICE
-        return self.unsignedToMsg(msg.SerializeToString())
+        whitelist_operation.metadataForKey.keyFormFactor = VCSEC_pb2.KEY_FORM_FACTOR_ANDROID_DEVICE
+
+        msg2 = VCSEC_pb2.ToVCSECMessage()
+        msg2.signedMessage.signatureType = VCSEC_pb2.SIGNATURE_TYPE_PRESENT_KEY
+        msg2.signedMessage.protobufMessageAsBytes = msg.SerializeToString()
+        return self.prependLength(msg2.SerializeToString())
 
     def unlockMsg(self):
         # unlocks the vehicle
@@ -164,7 +202,7 @@ class TeslaVehicle:
         # executes the given RKE action
         msg = VCSEC_pb2.UnsignedMessage()
         msg.RKEAction = action
-        return self.signedToMsg(msg.SerializeToString())
+        return self.signedToMsg(msg)
 
     def vehiclePublicKeyMsg(self):
         # requests the public key of the vehicle
@@ -172,5 +210,5 @@ class TeslaVehicle:
         info_request = msg.InformationRequest
         info_request.informationRequestType = VCSEC_pb2.INFORMATION_REQUEST_TYPE_GET_EPHEMERAL_PUBLIC_KEY
         key_id = info_request.keyId
-        key_id.publicKeySHA1 = self.getPublicKey()
-        return self.signedToMsg(msg.SerializeToString())
+        key_id.publicKeySHA1 = self.getKeyId()
+        return self.unsignedToMsg(msg)
