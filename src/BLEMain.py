@@ -58,7 +58,7 @@ async def run(address, name, line_num):
 
             # now we are ready to send commands to the vehicle
             # TODO: Do stuff
-            lock_msg = vehicle.unlockMsg()
+            lock_msg = vehicle.lockMsg()
             await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, lock_msg, response=True)
             print("Sent lock message to vehicle...")
             await asyncio.sleep(1.0)

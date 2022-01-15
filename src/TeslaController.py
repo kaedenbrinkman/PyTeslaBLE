@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.backends import default_backend
 # json
 import json
-# base64
+# encoding
 import binascii
 
 
@@ -26,10 +26,11 @@ class TeslaVehicle:
         self.ble_name = arr[1]
         self.file_name = file_name
         self.line_num = line_num
-        self.ephemeral_str = arr[4]
+        self.ephemeral_str = arr[4].strip()
         self.setCounter(int(arr[5]))
         if self.ephemeral_str != None and len(self.ephemeral_str) > 10:
-            # decode from hex back to bytes
+            print(self.ephemeral_str)
+            # TODO: THE LINE BELOW IS BROKEN!
             key = binascii.unhexlify(self.ephemeral_str)
             self.loadEphemeralKey(key)
         else:
@@ -43,8 +44,8 @@ class TeslaVehicle:
     def updateFile(self):
         # update the file with the ephemeral public key and counter
         arr = self.getLineFromFile(self.file_name, self.line_num)
-        arr[4] = self.ephemeral_str
         arr[5] = str(self.counter)
+        arr[4] = self.ephemeral_str
         self.writeLineToFile(self.file_name, self.line_num, arr)
         return 0
 
@@ -178,8 +179,6 @@ class TeslaVehicle:
 
     def loadEphemeralKey(self, key):
         self.ephemeral_str = binascii.hexlify(key)
-        # remove b' and ' from str
-        self.ephemeral_str = self.ephemeral_str[2:-1]
         curve = ec.SECP256R1()
         self.vehicle_eph_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
             curve, key)
@@ -203,10 +202,6 @@ class TeslaVehicle:
         if msg.HasField('sessionInfo'):
             key = msg.sessionInfo.publicKey
             self.loadEphemeralKey(key)
-            # encode key (bytes) to hex
-            key_hex = binascii.hexlify(key)
-            print(key_hex)
-            # TODO: save key back to file. for now this has to be done manually
             print("Loaded ephemeral key")
 
         # TODO: check if the message is signed
