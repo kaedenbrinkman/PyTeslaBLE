@@ -7,6 +7,8 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.backends import default_backend
 # json
 import json
+# base64
+import binascii
 
 
 class TeslaUUIDs:
@@ -22,8 +24,9 @@ class TeslaVehicle:
         self.ble_name = name
 
         if vehicle_eph_public_key != None:
-            curve = ec.SECP256R1()
-            self.vehicle_eph_public_key = ec.EllipticCurvePublicKey.from_encoded_point(curve, vehicle_eph_public_key)
+            # decode from hex back to bytes
+            key = binascii.unhexlify(vehicle_eph_public_key)
+            self.loadEphemeralKey(key)
         else:
             self.vehicle_eph_public_key = None
 
@@ -62,7 +65,8 @@ class TeslaVehicle:
         # creates sha1 hasher for creating shared key
         hasher = hashes.Hash(hashes.SHA1())
         # exchange own private key with car's ephemeral key to create an intermediate shared key
-        shared_key = self.private_key.exchange(ec.ECDH(), self.vehicle_eph_public_key)
+        shared_key = self.private_key.exchange(
+            ec.ECDH(), self.vehicle_eph_public_key)
         # intermediate shared key is then inserted into the hasher
         hasher.update(shared_key)
         # and the first 16 bytes of the hash will be our final shared key
@@ -125,7 +129,7 @@ class TeslaVehicle:
 
         self.counter += 1
         return self.prependLength(msg.SerializeToString())
-    
+
     def unsignedToMsg(self, message):
         msg = VCSEC_pb2.ToVCSECMessage()
         unsigned_msg = msg.unsignedMessage
@@ -137,37 +141,39 @@ class TeslaVehicle:
         # Shifts all bytes to the right by two
         # Sets the first two bytes to the length of the message
         return bytearray([len(message) >> 8, len(message) & 0xFF]) + message
-    
+
     def loadEphemeralKey(self, key):
         curve = ec.SECP256R1()
-        self.vehicle_eph_public_key = ec.EllipticCurvePublicKey.from_encoded_point(curve, key)
+        self.vehicle_eph_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
+            curve, key)
 
     def setCounter(self, counter):
         self.counter = counter
 
-
     ###########################       PROCESS RESPONSES       #############################
-    # FromVCSECMessage {
-    #     commandStatus {
-    #         operationStatus: OPERATIONSTATUS_WAIT
-    #     }
-    # }
+
     def handle_notify(self, sender, data):
         # remove first two bytes (length)
         data = data[2:]
         msg = VCSEC_pb2.FromVCSECMessage()
         msg.ParseFromString(data)
-        # see if the response is the shared key
-        if msg.HasField('sessionInfo') and msg.sessionInfo.HasField('publicKey'):
-            # vehicle.loadEphemeralKey(carResponseBytesDecodedToX962UncompressedPointKeyInBytes)
-            self.loadEphemeralKey(msg.sessionInfo.publicKey)
-            print("Loaded ephemeral key")
 
         print(msg)
+
+        # see if the response is the shared key
+        if msg.HasField('sessionInfo'):
+            key = msg.sessionInfo.publicKey
+            self.loadEphemeralKey(key)
+            # encode key (bytes) to hex
+            key_hex = binascii.hexlify(key)
+            print(key_hex)
+            # TODO: save key back to file. for now this has to be done manually
+            print("Loaded ephemeral key")
+
         # TODO: check if the message is signed
         # TODO: get command status
         # TODO: do something with the message
-        return 0
+        return True
 
     ###########################       VEHICLE ACTIONS       #############################
 
