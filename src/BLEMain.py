@@ -27,10 +27,6 @@ async def scan():
 async def run(address, name, nickname, paired=False, public_key=None):
     print("Connecting to {} ({})...".format(name, address))
     vehicle = TeslaVehicle(address, name, public_key)
-    if not paired:
-        # pair the vehicle before connecting
-        print("Pairing vehicle...")
-        print("Pairing not supported. Use the UWP Sample app for pairing.")
     try:
         async with BleakClient(address) as client:
             print("Connected")
