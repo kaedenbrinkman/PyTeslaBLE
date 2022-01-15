@@ -157,6 +157,12 @@ class TeslaVehicle:
         data = data[2:]
         msg = VCSEC_pb2.FromVCSECMessage()
         msg.ParseFromString(data)
+        # see if the response is the shared key
+        if msg.HasField('sessionInfo') and msg.sessionInfo.HasField('publicKey'):
+            # vehicle.loadEphemeralKey(carResponseBytesDecodedToX962UncompressedPointKeyInBytes)
+            self.loadEphemeralKey(msg.sessionInfo.publicKey)
+            print("Loaded ephemeral key")
+
         print(msg)
         # TODO: check if the message is signed
         # TODO: get command status
