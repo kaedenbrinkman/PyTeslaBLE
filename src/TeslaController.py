@@ -19,7 +19,7 @@ class TeslaUUIDs:
 
 
 class TeslaVehicle:
-    def __init__(self, ble_address, name, counter=0, vehicle_eph_public_key=None):
+    def __init__(self, ble_address, name, counter=1, vehicle_eph_public_key=None):
         self.ble_address = ble_address
         self.ble_name = name
 
