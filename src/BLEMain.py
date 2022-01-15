@@ -24,11 +24,9 @@ async def scan():
             tesla_vehicles.append(d)
 
 
-async def run(address, name, nickname, paired=False, public_key=None):
+async def run(address, name, line_num):
     print("Connecting to {} ({})...".format(name, address))
-    if public_key is not None and len(public_key) < 10:
-        public_key = None
-    vehicle = TeslaVehicle(address, name, 0, public_key)
+    vehicle = TeslaVehicle(".tesladata", line_num)
     try:
         async with BleakClient(address) as client:
             print("Connected")
@@ -60,7 +58,7 @@ async def run(address, name, nickname, paired=False, public_key=None):
 
             # now we are ready to send commands to the vehicle
             # TODO: Do stuff
-            lock_msg = vehicle.lockMsg()
+            lock_msg = vehicle.unlockMsg()
             await client.write_gatt_char(TeslaUUIDs.CHAR_WRITE_UUID, lock_msg, response=True)
             print("Sent lock message to vehicle...")
             await asyncio.sleep(1.0)
@@ -116,7 +114,7 @@ def main():
                             public_key = None
                         loop = asyncio.get_event_loop()
                         loop.run_until_complete(
-                            run(address, bt_name, nickname, True, public_key))
+                            run(address, bt_name, selection))
                         file2.close()
                         break
                 file2.close()
@@ -144,11 +142,11 @@ def main():
             id = str(len(open(".tesladata").readlines()))
             # save the vehicle to .tesladata file
             file = open(".tesladata", "a")
-            file.write("{}\t{}\t{}\t{}\t{}\n".format(
-                id, name, bt_addr, nickname, "null"))
+            file.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(
+                id, name, bt_addr, nickname, "null", 1))
             file.close()
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(run(bt_addr, name, paired, nickname))
+            loop.run_until_complete(run(bt_addr, name, id))
 
 
 # Run the program

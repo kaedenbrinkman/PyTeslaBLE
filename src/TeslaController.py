@@ -19,23 +19,57 @@ class TeslaUUIDs:
 
 
 class TeslaVehicle:
-    def __init__(self, ble_address, name, counter=1, vehicle_eph_public_key=None):
-        self.ble_address = ble_address
-        self.ble_name = name
-
-        if vehicle_eph_public_key != None:
+    def __init__(self, file_name, line_num):
+        arr = self.getLineFromFile(file_name, line_num)
+        # id, name, bt_addr, nickname, public_key, counter
+        self.ble_address = arr[2]
+        self.ble_name = arr[1]
+        self.file_name = file_name
+        self.line_num = line_num
+        self.ephemeral_str = arr[4]
+        self.setCounter(int(arr[5]))
+        if self.ephemeral_str != None and len(self.ephemeral_str) > 10:
             # decode from hex back to bytes
-            key = binascii.unhexlify(vehicle_eph_public_key)
+            key = binascii.unhexlify(self.ephemeral_str)
             self.loadEphemeralKey(key)
         else:
             self.vehicle_eph_public_key = None
 
         self.generate_keys()
-        self.counter = counter
 
     def __str__(self):
         return "BLE Address: {}, Name: {}".format(self.ble_address, self.ble_name)
-    
+
+    def updateFile(self):
+        # update the file with the ephemeral public key and counter
+        arr = self.getLineFromFile(self.file_name, self.line_num)
+        arr[4] = self.ephemeral_str
+        arr[5] = str(self.counter)
+        self.writeLineToFile(self.file_name, self.line_num, arr)
+        return 0
+
+    def getLineFromFile(self, file_name, line_num):
+        # opens the file and reads the line
+        with open(file_name, "r") as f:
+            for i, line in enumerate(f):
+                if i == int(line_num):
+                    return line.split()
+        print("ERROR: Could not find line {} in file {}".format(line_num, file_name))
+        exit()
+
+    def writeLineToFile(self, file_name, line_num, arr):
+        public_key = arr[4]
+        counter = arr[5]
+        # opens the file and reads the line
+        with open(file_name, "r") as f:
+            lines = f.readlines()
+        # replace the line with the new values
+        lines[int(line_num)] = "{} {} {} {} {} {}\n".format(
+            arr[0], arr[1], arr[2], arr[3], public_key, counter)
+        # write the new lines back to the file
+        with open(file_name, "w") as f:
+            f.writelines(lines)
+
     def isInitialized(self):
         return self.vehicle_eph_public_key != None
 
@@ -127,7 +161,7 @@ class TeslaVehicle:
         signed_msg.signature = encrypted_msg[-16:]
         signed_msg.keyId = self.getKeyId()
 
-        self.counter += 1
+        self.setCounter(self.counter + 1)
         return self.prependLength(msg.SerializeToString())
 
     def unsignedToMsg(self, message):
@@ -143,12 +177,17 @@ class TeslaVehicle:
         return bytearray([len(message) >> 8, len(message) & 0xFF]) + message
 
     def loadEphemeralKey(self, key):
+        self.ephemeral_str = binascii.hexlify(key)
+        # remove b' and ' from str
+        self.ephemeral_str = self.ephemeral_str[2:-1]
         curve = ec.SECP256R1()
         self.vehicle_eph_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
             curve, key)
+        self.updateFile()
 
     def setCounter(self, counter):
         self.counter = counter
+        self.updateFile()
 
     ###########################       PROCESS RESPONSES       #############################
 
