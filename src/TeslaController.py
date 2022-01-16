@@ -29,9 +29,7 @@ class TeslaVehicle:
         self.ephemeral_str = arr[4].strip()
         self.setCounter(int(arr[5]))
         if self.ephemeral_str != None and len(self.ephemeral_str) > 10:
-            print(self.ephemeral_str)
-            # TODO: THE LINE BELOW IS BROKEN!
-            key = binascii.unhexlify(self.ephemeral_str)
+            key = binascii.unhexlify(self.ephemeral_str[2:-1])
             self.loadEphemeralKey(key)
         else:
             self.vehicle_eph_public_key = None
