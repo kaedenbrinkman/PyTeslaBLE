@@ -1,7 +1,7 @@
 # PyTeslaBLE
 Python CLI for connecting to Tesla vehicles directly using the BLE API
 
-*NOTE: This is very much a work-in-progress. I have not gotten communication to work successfully yet.*
+*NOTE: This is very much a work-in-progress. Communication with the car is mostly functional, but still lacks features and is sometimes inconsistent. If you would like to contribute, feel free to contact me and submit issues or PRs.*
 
 
 ## Usage
