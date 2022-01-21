@@ -74,6 +74,10 @@ class BLE:
         tesla_vehicles = VehicleList()
         for i, peripheral in enumerate(peripherals):
             name = peripheral.identifier()
+            address = peripheral.address()
+            manufacturer_data = peripheral.manufacturer_data()
+            print(address)
+            print(manufacturer_data)
             if re.match("^S[a-f\d]{16}[A-F]$", name):
                 tesla_vehicles.add(peripheral, self.__private_key)
         return tesla_vehicles
@@ -116,54 +120,46 @@ class VehicleList:
 
     def __getitem__(self, index):
         return self.__vehicles[index]
-    
+
     def __str__(self):
-        return str(self.__vehicles)
+        str = "["
+        for vehicle in self.__vehicles:
+            str += str(vehicle) + ", "
+        return str[:-2] + "]"
 
 
 class Vehicle:
     def __init__(self, peripheral, private_key):
-        file_name = peripheral.identifier() + ".txt"
-        line_num = 0
+        file_name = peripheral.address() + ".txt"
+        self.file_name = file_name.replace(":", "")
         self.__peripheral = peripheral
-        arr = self.getLineFromFile(file_name, line_num)
+        arr = self.getLineFromFile()
         self.__private_key = private_key
-        self.__vehicle_key_str = arr[4]
-        self.__counter = int(arr[5])
+        self.__vehicle_key_str = arr[2]
+        self.__counter = int(arr[1])
         self.__service = TeslaMsgService(self)
-        self.file_name = file_name
-        self.line_num = line_num
-    
+
     def __str__(self):
-        return self.name()
+        return f"{self.name()} ({self.address()})"
+
+    def getLineFromFile(self):
+        file_name = self.file_name
+        if not exists(file_name):
+            with open(file_name, 'w') as f:
+                f.write(
+                "{} {} {}".format(self.__peripheral.address(), 1, "null"))
+                return [self.__peripheral.address(), 1, "null"]
+        # opens the file and reads the line
+        with open(file_name, "r") as f:
+            line = f.readline()
+            return line.split()
 
     def updateFile(self):
-        arr = self.getLineFromFile(self.file_name, self.line_num)
-        arr[5] = str(self.__counter)
-        arr[4] = self.__vehicle_key_str
-        self.writeLineToFile(self.file_name, self.line_num, arr)
-
-    def getLineFromFile(self, file_name, line_num):
-        # opens the file and reads the line
-        with open(file_name, "r") as f:
-            for i, line in enumerate(f):
-                if i == int(line_num):
-                    return line.split()
-        print("ERROR: Could not find line {} in file {}".format(line_num, file_name))
-        exit()
-
-    def writeLineToFile(self, file_name, line_num, arr):
-        public_key = arr[4]
-        counter = arr[5]
-        # opens the file and reads the line
-        with open(file_name, "r") as f:
-            lines = f.readlines()
-        # replace the line with the new values
-        lines[int(line_num)] = "{} {} {} {} {} {}\n".format(
-            arr[0], arr[1], arr[2], arr[3], public_key, counter)
+        file_name = self.file_name
         # write the new lines back to the file
         with open(file_name, "w") as f:
-            f.writelines(lines)
+            f.write(
+                "{} {} {}".format(self.__peripheral.address(), self.__counter, self.__vehicle_key_str))
 
     def address(self):
         return self.__peripheral.address()
@@ -182,6 +178,8 @@ class Vehicle:
         return self.__private_key
 
     def vehicle_key_str(self):
+        if self.__vehicle_key_str is "null" or len(self.__vehicle_key_str) < 10:
+            return None
         return self.__vehicle_key_str
 
     def setVehicleKeyStr(self, vehicle_key):
@@ -200,8 +198,7 @@ class Vehicle:
             self.__peripheral.write_request(
                 TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.WRITE_UUID, msg)
             print("Sent whitelist request")
-            time.sleep(2) # I think time.sleep is not what I want
-
+            time.sleep(2)  # I think time.sleep is not what I want
 
     def unlock(self):
         msg = self.__service.unlockMsg()
@@ -224,7 +221,9 @@ class TeslaMsgService:
     def __init__(self, vehicle):
         self.__vehicle = vehicle
         self.setCounter(vehicle.counter())
-        self.loadEphemeralKey(vehicle.vehicle_key_str())
+        vehicle_key_str = vehicle.vehicle_key_str()
+        if vehicle_key_str is not None:
+            self.loadEphemeralKey(vehicle_key_str)
 
     def __str__(self):
         return "BLE Address: {}, Name: {}".format(self.__vehicle.address(), self.__vehicle.name())
