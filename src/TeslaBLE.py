@@ -189,7 +189,7 @@ class Vehicle:
 
     def connect(self):
         self.__peripheral.connect()
-        # self.__peripheral.notify(TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_READ_UUID, lambda data: self.__service.handle_notify(data))
+        self.__peripheral.indicate(TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_READ_UUID, lambda data: self.__service.handle_notify(data))
 
     def disconnect(self):
         self.__peripheral.disconnect()
@@ -238,7 +238,7 @@ class TeslaMsgService:
         return self.vehicle_key != None
 
     def getPrivateKey(self):
-        private_key_bytes = self.private_key.private_bytes(
+        private_key_bytes = self.__vehicle.private_key().private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
             encryption_algorithm=serialization.NoEncryption()
@@ -246,7 +246,7 @@ class TeslaMsgService:
         return private_key_bytes
 
     def getPublicKey(self):
-        public_key_bytes = self.private_key.public_key().public_bytes(
+        public_key_bytes = self.__vehicle.private_key().public_key().public_bytes(
             encoding=serialization.Encoding.X962,
             format=serialization.PublicFormat.UncompressedPoint
         )
