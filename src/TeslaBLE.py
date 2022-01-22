@@ -189,6 +189,7 @@ class Vehicle:
 
     def connect(self):
         self.__peripheral.connect()
+        self.__peripheral.notify(TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.READ_UUID, lambda data: self.__service.handle_notify(data))
 
     def disconnect(self):
         self.__peripheral.disconnect()
