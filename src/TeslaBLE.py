@@ -1,4 +1,5 @@
 # protobuf
+import os
 import VCSEC_pb2
 # cryptography
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -128,7 +129,9 @@ class VehicleList:
 
 class Vehicle:
     def __init__(self, peripheral, private_key):
-        file_name = "./" + peripheral.address() + ".txt"
+        if not exists(".tesladata"):
+            os.mkdir(".tesladata")
+        file_name = ".tesladata/" + peripheral.address() + ".txt"
         self.file_name = file_name.replace(":", "")
         self.__peripheral = peripheral
         arr = self.getLineFromFile()
@@ -344,7 +347,7 @@ class TeslaMsgService:
     # as unlocking the vehicle. The response is in the form of a byte array.
     # Note: It still needs to be encrypted and prepended.
 
-    def whitelistOp(self):
+    def whitelistMsg(self):
         # request to add a vehicle to the whitelist, request permissions
         msg = VCSEC_pb2.UnsignedMessage()
         whitelist_operation = msg.WhitelistOperation

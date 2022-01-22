@@ -2,3 +2,4 @@
 .tesladata
 *.pyc
 private_key.pem
+src/Test.py
