@@ -75,7 +75,7 @@ class BLE:
             if len(manufacturer_data) > 0:
                 print(address)
                 print(manufacturer_data)
-            if len(manufacturer_data) > 0 and manufacturer_data.get("76") is not None:
+            if len(manufacturer_data) > 0 and manufacturer_data.get(76) is not None:
                 tesla_vehicles.add(peripheral, self.__private_key)
         return tesla_vehicles
 
@@ -189,7 +189,7 @@ class Vehicle:
 
     def connect(self):
         self.__peripheral.connect()
-        self.__peripheral.notify(TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.READ_UUID, lambda data: self.__service.handle_notify(data))
+        # self.__peripheral.notify(TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_READ_UUID, lambda data: self.__service.handle_notify(data))
 
     def disconnect(self):
         self.__peripheral.disconnect()
@@ -198,19 +198,19 @@ class Vehicle:
         while True:
             msg = self.__service.whitelistMsg()
             self.__peripheral.write_request(
-                TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.WRITE_UUID, msg)
+                TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
             print("Sent whitelist request")
             time.sleep(2)  # I think time.sleep is not what I want
 
     def unlock(self):
         msg = self.__service.unlockMsg()
         self.__peripheral.write_request(
-            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.WRITE_UUID, msg)
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
 
     def lock(self):
         msg = self.__service.lockMsg()
         self.__peripheral.write_request(
-            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.WRITE_UUID, msg)
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
 
     def isAdded(self):
         return self.__service.isAdded()
