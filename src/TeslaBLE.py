@@ -64,11 +64,6 @@ class BLE:
             choice = int(input("Enter choice: "))
             adapter = adapters[choice]
 
-        adapter.set_callback_on_scan_start(lambda: print("Scan started."))
-        adapter.set_callback_on_scan_stop(lambda: print("Scan complete."))
-        adapter.set_callback_on_scan_found(lambda peripheral: print("Found vehicle") if re.match("^S[a-f\d]{16}[A-F]$", peripheral.identifier()) else print(
-            f"Other device: {peripheral.identifier()} [{peripheral.address()}]"))
-
         adapter.scan_for(time)
         peripherals = adapter.scan_get_results()
         tesla_vehicles = VehicleList()
@@ -76,9 +71,10 @@ class BLE:
             name = peripheral.identifier()
             address = peripheral.address()
             manufacturer_data = peripheral.manufacturer_data()
-            print(address)
-            print(manufacturer_data)
-            if re.match("^S[a-f\d]{16}[A-F]$", name):
+            if len(manufacturer_data) > 0:
+                print(address)
+                print(manufacturer_data)
+            if len(manufacturer_data) > 0 and manufacturer_data.get("76") is not None:
                 tesla_vehicles.add(peripheral, self.__private_key)
         return tesla_vehicles
 
@@ -122,15 +118,17 @@ class VehicleList:
         return self.__vehicles[index]
 
     def __str__(self):
-        str = "["
+        result = "["
         for vehicle in self.__vehicles:
-            str += str(vehicle) + ", "
-        return str[:-2] + "]"
+            result += str(vehicle) + ", "
+        if (len(result) > 1):
+            result = result[:-2]
+        return result + "]"
 
 
 class Vehicle:
     def __init__(self, peripheral, private_key):
-        file_name = peripheral.address() + ".txt"
+        file_name = "./" + peripheral.address() + ".txt"
         self.file_name = file_name.replace(":", "")
         self.__peripheral = peripheral
         arr = self.getLineFromFile()
@@ -178,7 +176,7 @@ class Vehicle:
         return self.__private_key
 
     def vehicle_key_str(self):
-        if self.__vehicle_key_str is "null" or len(self.__vehicle_key_str) < 10:
+        if self.__vehicle_key_str == "null" or len(self.__vehicle_key_str) < 10:
             return None
         return self.__vehicle_key_str
 
@@ -221,6 +219,7 @@ class TeslaMsgService:
     def __init__(self, vehicle):
         self.__vehicle = vehicle
         self.setCounter(vehicle.counter())
+        self.vehicle_key = None
         vehicle_key_str = vehicle.vehicle_key_str()
         if vehicle_key_str is not None:
             self.loadEphemeralKey(vehicle_key_str)
