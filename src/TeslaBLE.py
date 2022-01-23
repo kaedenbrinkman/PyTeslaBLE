@@ -189,7 +189,7 @@ class Vehicle:
 
     def connect(self):
         self.__peripheral.connect()
-        self.__peripheral.indicate(TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_READ_UUID, lambda data: self.__service.handle_notify(data))
+        self.__peripheral.indicate(TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_READ_UUID, lambda data: self.handle_notify(data))
 
     def disconnect(self):
         self.__peripheral.disconnect()
@@ -197,19 +197,22 @@ class Vehicle:
     def whitelist(self):
         while True:
             msg = self.__service.whitelistMsg()
-            self.__peripheral.write_request(
+            msg = bytes(msg)
+            self.__peripheral.write_command(
                 TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
             print("Sent whitelist request")
             time.sleep(2)  # I think time.sleep is not what I want
 
     def unlock(self):
         msg = self.__service.unlockMsg()
-        self.__peripheral.write_request(
+        msg = bytes(msg)
+        self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
 
     def lock(self):
         msg = self.__service.lockMsg()
-        self.__peripheral.write_request(
+        msg = bytes(msg)
+        self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
 
     def isAdded(self):
@@ -217,6 +220,9 @@ class Vehicle:
 
     def isConnected(self):
         return self.__peripheral.is_connected()
+
+    def handle_notify(self, data):
+        self.__service.handle_notify(data)
 
 
 class TeslaMsgService:
@@ -323,7 +329,7 @@ class TeslaMsgService:
 
     ###########################       PROCESS RESPONSES       #############################
 
-    def handle_notify(self, sender, data):
+    def handle_notify(self, data):
         # remove first two bytes (length)
         data = data[2:]
         msg = VCSEC_pb2.FromVCSECMessage()
