@@ -148,7 +148,7 @@ class Vehicle:
         if not exists(file_name):
             with open(file_name, 'w') as f:
                 f.write(
-                "{} {} {}".format(self.__peripheral.address(), 1, "null"))
+                    "{} {} {}".format(self.__peripheral.address(), 1, "null"))
                 return [self.__peripheral.address(), 1, "null"]
         # opens the file and reads the line
         with open(file_name, "r") as f:
@@ -189,19 +189,28 @@ class Vehicle:
 
     def connect(self):
         self.__peripheral.connect()
-        self.__peripheral.indicate(TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_READ_UUID, lambda data: self.handle_notify(data))
+        self.__peripheral.indicate(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_READ_UUID, lambda data: self.handle_notify(data))
 
     def disconnect(self):
         self.__peripheral.disconnect()
 
     def whitelist(self):
+        msg = self.__service.whitelistMsg()
+        msg = bytes(msg)
+        self.__peripheral.write_command(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
+        print("Sent whitelist request")
         while True:
-            msg = self.__service.whitelistMsg()
+            msg = self.__service.vehiclePublicKeyMsg()
             msg = bytes(msg)
             self.__peripheral.write_command(
                 TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
-            print("Sent whitelist request")
+            print("Waiting for keycard to be tapped...")
             time.sleep(2)  # I think time.sleep is not what I want
+            if (self.isAdded()):
+                print("Authorized successfully")
+                break
 
     def unlock(self):
         msg = self.__service.unlockMsg()
@@ -230,6 +239,7 @@ class TeslaMsgService:
         self.__vehicle = vehicle
         self.setCounter(vehicle.counter())
         self.vehicle_key = None
+        self.private_key = vehicle.private_key()
         vehicle_key_str = vehicle.vehicle_key_str()
         if vehicle_key_str is not None:
             self.loadEphemeralKey(vehicle_key_str)
