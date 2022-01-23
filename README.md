@@ -1,7 +1,6 @@
 # PyTeslaBLE
 Python CLI for connecting to Tesla vehicles directly using the BLE API
 
-
 ## Usage
 `pip install pyteslable`
 
