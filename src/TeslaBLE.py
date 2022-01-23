@@ -249,12 +249,6 @@ class Vehicle:
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
-    
-    def remote_drive(self):
-        msg = self.__service.remoteDriveMsg()
-        msg = bytes(msg)
-        self.__peripheral.write_command(
-            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
 
     def isAdded(self):
         return self.__service.isAdded()
@@ -264,6 +258,9 @@ class Vehicle:
 
     def handle_notify(self, data):
         self.__service.handle_notify(data)
+    
+    def authenticationRequest(self, data):
+        print(data)
 
 
 class TeslaMsgService:
@@ -388,6 +385,8 @@ class TeslaMsgService:
             key = msg.sessionInfo.publicKey
             self.loadEphemeralKey(key)
             print("Loaded ephemeral key")
+        elif msg.HasField('authenticationRequest'):
+            self.__vehicle.authenticationRequest(msg.authenticationRequest)
 
         # TODO: check if the message is signed
         # TODO: get command status
@@ -441,9 +440,6 @@ class TeslaMsgService:
         # closes the charge port
         return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_CLOSE_CHARGE_PORT)
 
-    def remoteDriveMsg(self):
-        # remote drive
-        return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_REMOTE_DRIVE)
 
     def rkeActionMsg(self, action):
         # executes the given RKE action

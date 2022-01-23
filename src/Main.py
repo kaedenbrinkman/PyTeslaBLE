@@ -14,6 +14,7 @@ vehicle = list[choice]
 if (vehicle != None):
     print("Connecting to vehicle...")
     vehicle.connect()
+    vehicle.debug()
 
     if not vehicle.isConnected():
         print("Vehicle failed to connect")
@@ -40,8 +41,6 @@ if (vehicle != None):
             vehicle.open_charge_port()
         elif command == "CLOSE_CHARGE_PORT":
             vehicle.close_charge_port()
-        elif command == "REMOTE_DRIVE":
-            vehicle.remote_drive()
         elif command == "EXIT":
             break
         elif command == "HELP":
@@ -54,7 +53,6 @@ if (vehicle != None):
             print("\tOPEN_FRUNK: Open the vehicle's front trunk")
             print("\tOPEN_CHARGE_PORT: Open and unlock the vehicle's charge port")
             print("\tCLOSE_CHARGE_PORT: Close and lock the vehicle's charge port")
-            print("\tREMOTE_DRIVE: Enable keyless driving")
             print("\n\n")
         else:
             print("Unknown command")
