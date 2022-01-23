@@ -4,6 +4,9 @@ tesla_ble = BLE("private_key.pem")
 
 print("Scanning for vehicles...")
 list = tesla_ble.scan()
+if (len(list) == 0):
+    print("No vehicles found.")
+    exit()
 # list choices and prompt user to select one
 print("Please select a vehicle:")
 for i, vehicle in enumerate(list):
@@ -14,7 +17,7 @@ vehicle = list[choice]
 if (vehicle != None):
     print("Connecting to vehicle...")
     vehicle.connect()
-    vehicle.debug()
+    # vehicle.debug()
 
     if not vehicle.isConnected():
         print("Vehicle failed to connect")
@@ -23,6 +26,9 @@ if (vehicle != None):
     if not vehicle.isAdded():
         print("Tap your keycard on the center console")
         vehicle.whitelist()
+    
+    # Print closure status of all doors when they change
+    vehicle.onStatusChange(lambda vehic: print(f"\nStatus update: {vehic.status()}\n"))
 
     command = ""
     while True:
@@ -56,6 +62,7 @@ if (vehicle != None):
             print("\n\n")
         else:
             print("Unknown command")
+    print("Disconnecting...")
     vehicle.disconnect()
     print("Vehicle disconnected successfully")
 else:

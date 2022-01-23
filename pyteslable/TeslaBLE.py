@@ -142,6 +142,31 @@ class Vehicle:
     def debug(self):
         self.__debug = True
 
+    def onStatusChange(self, func):
+        self.__onStatusChange = func
+
+    def setStatus(self, data):
+        self.__charge_port_open = data.chargePort == 1
+        self.__front_driver_door_open = data.frontDriverDoor == 1
+        self.__rear_driver_door_open = data.rearDriverDoor == 1
+        self.__front_passenger_door_open = data.frontPassengerDoor == 1
+        self.__rear_passenger_door_open = data.rearPassengerDoor == 1
+        self.__rear_trunk_open = data.rearTrunk == 1
+        self.__front_trunk_open = data.frontTrunk == 1
+        if self.__onStatusChange is not None:
+            self.__onStatusChange(self)
+
+    def status(self):
+        return {
+            "charge_port_open": self.__charge_port_open,
+            "front_driver_door_open": self.__front_driver_door_open,
+            "rear_driver_door_open": self.__rear_driver_door_open,
+            "front_passenger_door_open": self.__front_passenger_door_open,
+            "rear_passenger_door_open": self.__rear_passenger_door_open,
+            "rear_trunk_open": self.__rear_trunk_open,
+            "front_trunk_open": self.__front_trunk_open
+        }
+
     def is_debug(self):
         return self.__debug
 
@@ -249,13 +274,13 @@ class Vehicle:
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
-    
+
     def vehicle_status(self):
         msg = self.__service.vehicleStatusMsg()
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
-    
+
     def vehicle_info(self):
         msg = self.__service.vehicleInfoMsg()
         msg = bytes(msg)
@@ -403,6 +428,8 @@ class TeslaMsgService:
         elif msg.HasField('authenticationRequest'):
             self.__vehicle.authenticationRequest(
                 msg.authenticationRequest.requestedLevel)
+        elif msg.HasField('vehicleStatus'):
+            self.__vehicle.setStatus(msg.vehicleStatus.closureStatuses)
 
         # TODO: check if the message is signed
         # TODO: get command status
