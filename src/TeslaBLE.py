@@ -231,6 +231,24 @@ class Vehicle:
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
+    
+    def open_frunk(self):
+        msg = self.__service.openFrunkMsg()
+        msg = bytes(msg)
+        self.__peripheral.write_command(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
+    
+    def open_charge_port(self):
+        msg = self.__service.openChargePortMsg()
+        msg = bytes(msg)
+        self.__peripheral.write_command(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
+    
+    def close_charge_port(self):
+        msg = self.__service.closeChargePortMsg()
+        msg = bytes(msg)
+        self.__peripheral.write_command(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
 
     def isAdded(self):
         return self.__service.isAdded()
@@ -404,6 +422,18 @@ class TeslaMsgService:
     def openTrunkMsg(self):
         # opens the rear trunk
         return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_OPEN_TRUNK)
+    
+    def openFrunkMsg(self):
+        # opens the front trunk
+        return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_OPEN_FRUNK)
+    
+    def openChargePortMsg(self):
+        # opens the charge port
+        return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_OPEN_CHARGE_PORT)
+    
+    def closeChargePortMsg(self):
+        # closes the charge port
+        return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_CLOSE_CHARGE_PORT)
 
     def rkeActionMsg(self, action):
         # executes the given RKE action
