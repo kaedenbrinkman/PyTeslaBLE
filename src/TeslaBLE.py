@@ -139,9 +139,16 @@ class Vehicle:
         self.__vehicle_key_str = arr[2]
         self.__counter = int(arr[1])
         self.__service = TeslaMsgService(self)
+        self.__debug = False
 
     def __str__(self):
         return f"{self.name()} ({self.address()})"
+
+    def debug(self):
+        self.__debug = True
+
+    def is_debug(self):
+        return self.__debug
 
     def getLineFromFile(self):
         file_name = self.file_name
@@ -220,6 +227,12 @@ class Vehicle:
 
     def lock(self):
         msg = self.__service.lockMsg()
+        msg = bytes(msg)
+        self.__peripheral.write_command(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
+
+    def open_trunk(self):
+        msg = self.__service.openTrunkMsg()
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
@@ -348,7 +361,8 @@ class TeslaMsgService:
         msg = VCSEC_pb2.FromVCSECMessage()
         msg.ParseFromString(data)
 
-        print(msg)
+        if self.__vehicle.is_debug():
+            print(msg)
 
         # see if the response is the shared key
         if msg.HasField('sessionInfo'):
