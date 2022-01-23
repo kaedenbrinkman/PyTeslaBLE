@@ -259,8 +259,11 @@ class Vehicle:
     def handle_notify(self, data):
         self.__service.handle_notify(data)
     
-    def authenticationRequest(self, data):
-        print(data)
+    def authenticationRequest(self, requested_level):
+        msg = self.__service.authenticationRequestMsg(requested_level)
+        msg = bytes(msg)
+        self.__peripheral.write_command(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
 
 
 class TeslaMsgService:
@@ -386,7 +389,7 @@ class TeslaMsgService:
             self.loadEphemeralKey(key)
             print("Loaded ephemeral key")
         elif msg.HasField('authenticationRequest'):
-            self.__vehicle.authenticationRequest(msg.authenticationRequest)
+            self.__vehicle.authenticationRequest(msg.authenticationRequest.requestedLevel)
 
         # TODO: check if the message is signed
         # TODO: get command status
@@ -445,6 +448,11 @@ class TeslaMsgService:
         # executes the given RKE action
         msg = VCSEC_pb2.UnsignedMessage()
         msg.RKEAction = action
+        return self.signedToMsg(msg)
+
+    def authenticationRequestMsg(self, level):
+        msg = VCSEC_pb2.UnsignedMessage()
+        msg.authenticationResponse.authenticationLevel = level
         return self.signedToMsg(msg)
 
     def vehiclePublicKeyMsg(self):
