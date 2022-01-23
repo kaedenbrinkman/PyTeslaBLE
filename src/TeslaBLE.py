@@ -69,12 +69,7 @@ class BLE:
         peripherals = adapter.scan_get_results()
         tesla_vehicles = VehicleList()
         for i, peripheral in enumerate(peripherals):
-            name = peripheral.identifier()
-            address = peripheral.address()
             manufacturer_data = peripheral.manufacturer_data()
-            if len(manufacturer_data) > 0:
-                print(address)
-                print(manufacturer_data)
             if len(manufacturer_data) > 0 and manufacturer_data.get(76) is not None:
                 tesla_vehicles.add(peripheral, self.__private_key)
         return tesla_vehicles
