@@ -2,3 +2,8 @@
 .tesladata
 *.pyc
 private_key.pem
+example/Test.py
+.vscode
+pyteslable.egg-info
+build
+dist
