@@ -40,6 +40,8 @@ if (vehicle != None):
             vehicle.open_charge_port()
         elif command == "CLOSE_CHARGE_PORT":
             vehicle.close_charge_port()
+        elif command == "REMOTE_DRIVE":
+            vehicle.remote_drive()
         elif command == "EXIT":
             break
         elif command == "HELP":
@@ -52,6 +54,7 @@ if (vehicle != None):
             print("OPEN_FRUNK: Open the vehicle's front trunk")
             print("OPEN_CHARGE_PORT: Open the vehicle's charge port")
             print("CLOSE_CHARGE_PORT: Close the vehicle's charge port")
+            print("REMOTE_DRIVE: Enable keyless driving")
             print("\n\n")
         else:
             print("Unknown command")

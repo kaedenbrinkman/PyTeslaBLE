@@ -249,6 +249,12 @@ class Vehicle:
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
+    
+    def remote_drive(self):
+        msg = self.__service.remoteDriveMsg()
+        msg = bytes(msg)
+        self.__peripheral.write_command(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
 
     def isAdded(self):
         return self.__service.isAdded()
@@ -434,6 +440,10 @@ class TeslaMsgService:
     def closeChargePortMsg(self):
         # closes the charge port
         return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_CLOSE_CHARGE_PORT)
+
+    def remoteDriveMsg(self):
+        # remote drive
+        return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_REMOTE_DRIVE)
 
     def rkeActionMsg(self, action):
         # executes the given RKE action
