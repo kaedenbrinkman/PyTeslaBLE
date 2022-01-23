@@ -6,3 +6,4 @@ example/Test.py
 .vscode
 pyteslable.egg-info
 build
+dist
