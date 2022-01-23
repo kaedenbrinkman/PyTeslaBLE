@@ -3,3 +3,4 @@
 *.pyc
 private_key.pem
 example/Test.py
+.vscode
