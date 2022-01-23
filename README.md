@@ -17,9 +17,11 @@ print(list)
 
 # Connect to a specific vehicle by BLE address
 vehicle = list.getAddress("05:eb:6d:b7:f7:92")
+vehicle.connect()
 if not vehicle.isAdded():
   print("Tap your keycard on the center console")
   vehicle.whitelist()
+# Now we are ready to send commands!
 vehicle.unlock()
 ```
 
