@@ -1,6 +1,6 @@
 # protobuf
 import os
-import VCSEC_pb2
+from pyteslable import VCSEC_pb2
 # cryptography
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.asymmetric import ec

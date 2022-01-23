@@ -1,4 +1,4 @@
-from TeslaBLE import BLE
+from pyteslable import BLE
 
 tesla_ble = BLE("private_key.pem")
 

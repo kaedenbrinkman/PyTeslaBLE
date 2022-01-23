@@ -1,3 +1,5 @@
+from pyteslable.TeslaBLE import BLE, Vehicle, VehicleList
+from pyteslable import VCSEC_pb2
 """
 pyteslable
 

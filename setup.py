@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='pyteslable',
@@ -8,8 +8,8 @@ setup(
     author='Kaeden Brinkman',
     author_email='kaeden@kaedenb.org',
     license='BSD 2-clause',
-    packages=['pyteslable'],
-    install_requires=['simplepyble', 'cryptography', 'binascii', 'protobuf'],
+    packages=find_packages(exclude=['test']),
+    install_requires=['simplepyble', 'cryptography', 'protobuf'],
 
     classifiers=[
         'Development Status :: 1 - Planning',
