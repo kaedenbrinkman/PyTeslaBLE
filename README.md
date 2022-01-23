@@ -1,5 +1,5 @@
 # PyTeslaBLE
-Python CLI for connecting to Tesla vehicles directly using the BLE API
+Python library for communicating with Tesla vehicles directly using the BLE API
 
 :bangbang: | WARNING: This library is not supported by Tesla, and it could break at any moment. It should be noted that this library stores private keys and other sensitive data unencrypted on your machine. I am not responsible for any (extremely unlikely) damage done to your car.
 :---: | :---
