@@ -327,11 +327,14 @@ class TeslaMsgService:
         return bytearray([len(message) >> 8, len(message) & 0xFF]) + message
 
     def loadEphemeralKey(self, key):
+        if isinstance(key, str):
+            key = key[2:-1]
+            key = binascii.unhexlify(key)
         self.ephemeral_str = binascii.hexlify(key)
         curve = ec.SECP256R1()
         self.vehicle_key = ec.EllipticCurvePublicKey.from_encoded_point(
             curve, key)
-        self.__vehicle.setVehicleKey(self.vehicle_key)
+        self.__vehicle.setVehicleKeyStr(self.ephemeral_str)
 
     def setCounter(self, counter):
         self.counter = counter
