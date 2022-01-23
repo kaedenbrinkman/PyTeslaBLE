@@ -231,21 +231,33 @@ class Vehicle:
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
-    
+
     def open_frunk(self):
         msg = self.__service.openFrunkMsg()
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
-    
+
     def open_charge_port(self):
         msg = self.__service.openChargePortMsg()
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
-    
+
     def close_charge_port(self):
         msg = self.__service.closeChargePortMsg()
+        msg = bytes(msg)
+        self.__peripheral.write_command(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
+    
+    def vehicle_status(self):
+        msg = self.__service.vehicleStatusMsg()
+        msg = bytes(msg)
+        self.__peripheral.write_command(
+            TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
+    
+    def vehicle_info(self):
+        msg = self.__service.vehicleInfoMsg()
         msg = bytes(msg)
         self.__peripheral.write_command(
             TeslaUUIDs.SERVICE_UUID, TeslaUUIDs.CHAR_WRITE_UUID, msg)
@@ -258,7 +270,7 @@ class Vehicle:
 
     def handle_notify(self, data):
         self.__service.handle_notify(data)
-    
+
     def authenticationRequest(self, requested_level):
         msg = self.__service.authenticationRequestMsg(requested_level)
         msg = bytes(msg)
@@ -389,7 +401,8 @@ class TeslaMsgService:
             self.loadEphemeralKey(key)
             print("Loaded ephemeral key")
         elif msg.HasField('authenticationRequest'):
-            self.__vehicle.authenticationRequest(msg.authenticationRequest.requestedLevel)
+            self.__vehicle.authenticationRequest(
+                msg.authenticationRequest.requestedLevel)
 
         # TODO: check if the message is signed
         # TODO: get command status
@@ -430,25 +443,37 @@ class TeslaMsgService:
     def openTrunkMsg(self):
         # opens the rear trunk
         return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_OPEN_TRUNK)
-    
+
     def openFrunkMsg(self):
         # opens the front trunk
         return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_OPEN_FRUNK)
-    
+
     def openChargePortMsg(self):
         # opens the charge port
         return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_OPEN_CHARGE_PORT)
-    
+
     def closeChargePortMsg(self):
         # closes the charge port
         return self.rkeActionMsg(VCSEC_pb2.RKEAction_E.RKE_ACTION_CLOSE_CHARGE_PORT)
-
 
     def rkeActionMsg(self, action):
         # executes the given RKE action
         msg = VCSEC_pb2.UnsignedMessage()
         msg.RKEAction = action
         return self.signedToMsg(msg)
+
+    def informationRequestMsg(self, type):
+        # requests information about the vehicle
+        msg = VCSEC_pb2.UnsignedMessage()
+        msg.InformationRequest = VCSEC_pb2.InformationRequest()
+        msg.InformationRequest.informationRequestType = type
+        return self.signedToMsg(msg)
+
+    def vehicleInfoMsg(self):
+        return self.informationRequestMsg(VCSEC_pb2.InformationRequestType.INFORMATION_REQUEST_TYPE_GET_VEHICLE_INFO)
+
+    def vehicleStatusMsg(self):
+        return self.informationRequestMsg(VCSEC_pb2.InformationRequestType.INFORMATION_REQUEST_TYPE_GET_STATUS)
 
     def authenticationRequestMsg(self, level):
         msg = VCSEC_pb2.UnsignedMessage()
