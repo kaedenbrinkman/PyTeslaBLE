@@ -146,18 +146,23 @@ class Vehicle:
         self.__onStatusChange = func
 
     def setStatus(self, data):
-        self.__charge_port_open = data.chargePort == 1
-        self.__front_driver_door_open = data.frontDriverDoor == 1
-        self.__rear_driver_door_open = data.rearDriverDoor == 1
-        self.__front_passenger_door_open = data.frontPassengerDoor == 1
-        self.__rear_passenger_door_open = data.rearPassengerDoor == 1
-        self.__rear_trunk_open = data.rearTrunk == 1
-        self.__front_trunk_open = data.frontTrunk == 1
+        closure_status = data.closureStatuses
+        lock_state = data.vehicleLockState
+        print(lock_state)
+        self.__locked = lock_state == 1
+        self.__charge_port_open = closure_status.chargePort == 1
+        self.__front_driver_door_open = closure_status.frontDriverDoor == 1
+        self.__rear_driver_door_open = closure_status.rearDriverDoor == 1
+        self.__front_passenger_door_open = closure_status.frontPassengerDoor == 1
+        self.__rear_passenger_door_open = closure_status.rearPassengerDoor == 1
+        self.__rear_trunk_open = closure_status.rearTrunk == 1
+        self.__front_trunk_open = closure_status.frontTrunk == 1
         if self.__onStatusChange is not None:
             self.__onStatusChange(self)
 
     def status(self):
         return {
+            "locked": self.__locked,
             "charge_port_open": self.__charge_port_open,
             "front_driver_door_open": self.__front_driver_door_open,
             "rear_driver_door_open": self.__rear_driver_door_open,
@@ -429,7 +434,7 @@ class TeslaMsgService:
             self.__vehicle.authenticationRequest(
                 msg.authenticationRequest.requestedLevel)
         elif msg.HasField('vehicleStatus'):
-            self.__vehicle.setStatus(msg.vehicleStatus.closureStatuses)
+            self.__vehicle.setStatus(msg.vehicleStatus)
 
         # TODO: check if the message is signed
         # TODO: get command status
@@ -492,15 +497,17 @@ class TeslaMsgService:
     def informationRequestMsg(self, type):
         # requests information about the vehicle
         msg = VCSEC_pb2.UnsignedMessage()
-        msg.InformationRequest = VCSEC_pb2.InformationRequest()
-        msg.InformationRequest.informationRequestType = type
+        info_request = msg.InformationRequest
+        info_request.informationRequestType = type
+        key_id = info_request.keyId
+        key_id.publicKeySHA1 = self.getKeyId()
         return self.signedToMsg(msg)
 
     def vehicleInfoMsg(self):
-        return self.informationRequestMsg(VCSEC_pb2.InformationRequestType.INFORMATION_REQUEST_TYPE_GET_VEHICLE_INFO)
+        return self.informationRequestMsg(VCSEC_pb2.INFORMATION_REQUEST_TYPE_GET_VEHICLE_INFO)
 
     def vehicleStatusMsg(self):
-        return self.informationRequestMsg(VCSEC_pb2.InformationRequestType.INFORMATION_REQUEST_TYPE_GET_STATUS)
+        return self.informationRequestMsg(VCSEC_pb2.INFORMATION_REQUEST_TYPE_GET_STATUS)
 
     def authenticationRequestMsg(self, level):
         msg = VCSEC_pb2.UnsignedMessage()

@@ -30,6 +30,9 @@ if (vehicle != None):
     # Print closure status of all doors when they change
     vehicle.onStatusChange(lambda vehic: print(f"\nStatus update: {vehic.status()}\n"))
 
+    # Request status
+    vehicle.vehicle_status()
+
     command = ""
     while True:
         print("Enter a command, or 'help' for a list of commands. Type 'exit' to quit.")
