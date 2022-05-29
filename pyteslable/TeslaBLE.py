@@ -299,7 +299,8 @@ class Vehicle:
         return self.__peripheral.is_connected()
 
     def handle_notify(self, data):
-        self.__service.handle_notify(data)
+        if self.isAdded():
+            self.__service.handle_notify(data)
 
     def authenticationRequest(self, requested_level):
         msg = self.__service.authenticationRequestMsg(requested_level)
