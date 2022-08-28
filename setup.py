@@ -1,9 +1,14 @@
 from setuptools import setup, find_packages
 
+long_description = open('README.md').read()
+
 setup(
     name='pyteslable',
-    version='0.1.0',
+    version='0.1.3',
     description='Python interface for connecting to Tesla vehicles directly using the BLE API',
+    readme='README.md',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/kaedenbrinkman/PyTeslaBLE',
     author='Kaeden Brinkman',
     author_email='kaeden@kaedenb.org',
