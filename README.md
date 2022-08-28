@@ -32,4 +32,4 @@ For now, the best solution I have is to simply modify the if statement that prod
 ## Credits
 Huge props to Lex Nastin for putting together some documentation for the Tesla BLE API. Check out the documentation [here](https://teslabtapi.lexnastin.com/).
 
-Also many thanks to Kevin Dewald from Neuralink for the BLE library!
+Also many thanks to Kevin Dewald from Neuralink for the [BLE library](https://github.com/OpenBluetoothToolbox/SimpleBLE)!
