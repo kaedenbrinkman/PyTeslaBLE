@@ -4,7 +4,7 @@ long_description = open('README.md').read()
 
 setup(
     name='pyteslable',
-    version='0.1.3',
+    version='0.1.4',
     description='Python interface for connecting to Tesla vehicles directly using the BLE API',
     readme='README.md',
     long_description=long_description,
