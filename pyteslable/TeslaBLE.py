@@ -417,30 +417,29 @@ class TeslaMsgService:
     ###########################       PROCESS RESPONSES       #############################
 
     def handle_notify(self, data):
-        if self.isAdded():
-            # remove first two bytes (length)
-            data = data[2:]
-            msg = VCSEC_pb2.FromVCSECMessage()
-            msg.ParseFromString(data)
-    
-            if self.__vehicle.is_debug():
-                print(msg)
-    
-            # see if the response is the shared key
-            if msg.HasField('sessionInfo'):
-                key = msg.sessionInfo.publicKey
-                self.loadEphemeralKey(key)
-                print("Loaded ephemeral key")
-            elif msg.HasField('authenticationRequest'):
-                self.__vehicle.authenticationRequest(
-                    msg.authenticationRequest.requestedLevel)
-            elif msg.HasField('vehicleStatus'):
-                self.__vehicle.setStatus(msg.vehicleStatus)
-    
-            # TODO: check if the message is signed
-            # TODO: get command status
-            # TODO: do something with the message
-            return True
+        # remove first two bytes (length)
+        data = data[2:]
+        msg = VCSEC_pb2.FromVCSECMessage()
+        msg.ParseFromString(data)
+
+        if self.__vehicle.is_debug():
+            print(msg)
+
+        # see if the response is the shared key
+        if msg.HasField('sessionInfo'):
+            key = msg.sessionInfo.publicKey
+            self.loadEphemeralKey(key)
+            print("Loaded ephemeral key")
+        elif msg.HasField('authenticationRequest'):
+            self.__vehicle.authenticationRequest(
+                msg.authenticationRequest.requestedLevel)
+        elif msg.HasField('vehicleStatus'):
+            self.__vehicle.setStatus(msg.vehicleStatus)
+
+        # TODO: check if the message is signed
+        # TODO: get command status
+        # TODO: do something with the message
+        return True
 
     ###########################       VEHICLE ACTIONS       #############################
 
