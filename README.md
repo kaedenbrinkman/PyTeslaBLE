@@ -1,6 +1,8 @@
 # PyTeslaBLE
 Python library for communicating with Tesla vehicles directly using the BLE API
 
+Note: Tesla has now published an official SDK here: https://github.com/teslamotors/vehicle-command/
+
 :bangbang: | WARNING: This library is not supported by Tesla, and it could break at any moment. It should be noted that this library stores private keys and other sensitive data unencrypted on your machine. I am not responsible for any (extremely unlikely) damage done to your car.
 :---: | :---
 
